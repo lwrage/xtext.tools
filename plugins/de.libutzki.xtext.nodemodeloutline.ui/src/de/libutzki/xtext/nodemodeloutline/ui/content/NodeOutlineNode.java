@@ -15,6 +15,7 @@ import org.eclipse.xtext.resource.XtextResource;
 import org.eclipse.xtext.ui.editor.model.IXtextDocument;
 import org.eclipse.xtext.ui.editor.outline.IOutlineNode;
 import org.eclipse.xtext.ui.editor.outline.impl.AbstractOutlineNode;
+import org.eclipse.xtext.ui.editor.outline.impl.BackgroundOutlineTreeProvider;
 import org.eclipse.xtext.util.ITextRegion;
 import org.eclipse.xtext.util.concurrent.IUnitOfWork;
 
@@ -23,7 +24,7 @@ import com.google.common.collect.Lists;
 /**
  * Unfortunately this class contains a lot of copy/paste code.
  * The source is {@link AbstractOutlineNode}.
- * 
+ *
  * @author Jan Koehnlein - Author of {@link AbstractOutlineNode}
  * @author Oliver Libutzki <oliver@libutzki.de>
  *
@@ -41,7 +42,7 @@ public class NodeOutlineNode implements IOutlineNode{
 	private boolean isLeaf = false;
 
 	private ITextRegion textRegion;
-	
+
 	protected INode node;
 
 	/**
@@ -59,29 +60,35 @@ public class NodeOutlineNode implements IOutlineNode{
 
 	protected void setParent(IOutlineNode newParent) {
 		Assert.isLegal(newParent == null || newParent instanceof NodeOutlineNode);
-		if (parentOutlineNode != null)
+		if (parentOutlineNode != null) {
 			parentOutlineNode.removeChild(this);
+		}
 		parentOutlineNode = (NodeOutlineNode) newParent;
-		if (parentOutlineNode != null)
+		if (parentOutlineNode != null) {
 			parentOutlineNode.addChild(this);
+		}
 	}
 
 	protected boolean addChild(IOutlineNode outlineNode) {
-		if (children == null)
+		if (children == null) {
 			children = Lists.newArrayList();
+		}
 		isLeaf = false;
 		return children.add(outlineNode);
 	}
 
 	protected boolean removeChild(IOutlineNode outlineNode) {
-		if (children == null)
+		if (children == null) {
 			return false;
+		}
 		return children.remove(outlineNode);
 	}
 
+	@Override
 	public List<IOutlineNode> getChildren() {
-		if (isLeaf)
+		if (isLeaf) {
 			return Collections.emptyList();
+		}
 		if (children == null) {
 			INodeModelOutlineTreeStructureProvider treeProvider = getTreeProvider();
 			if (treeProvider != null) {
@@ -94,18 +101,21 @@ public class NodeOutlineNode implements IOutlineNode{
 			}
 		}
 		return Collections.unmodifiableList(children);
-		
+
 
 	}
 
+	@Override
 	public IOutlineNode getParent() {
 		return parentOutlineNode;
 	}
 
+	@Override
 	public boolean hasChildren() {
 		return !isLeaf;
 	}
 
+	@Override
 	public Object getText() {
 		return text;
 	}
@@ -117,6 +127,7 @@ public class NodeOutlineNode implements IOutlineNode{
 	/**
 	 * @deprecated use {@link #getImageDescriptor()} instead.
 	 */
+	@Override
 	@Deprecated
 	public Image getImage() {
 		return image;
@@ -145,10 +156,12 @@ public class NodeOutlineNode implements IOutlineNode{
 		this.textRegion = textRegion;
 	}
 
+	@Override
 	public ITextRegion getFullTextRegion() {
 		return textRegion;
 	}
 
+	@Override
 	public ITextRegion getSignificantTextRegion() {
 		return textRegion;
 	}
@@ -158,8 +171,8 @@ public class NodeOutlineNode implements IOutlineNode{
 		return "[" + getClass().getSimpleName() + "] " + text.toString();
 	}
 
-	@SuppressWarnings("rawtypes")
-	public Object getAdapter(Class adapterType) {
+	@Override
+	public <T> T getAdapter(Class<T> adapterType) {
 		return Platform.getAdapterManager().getAdapter(this, adapterType);
 	}
 
@@ -171,12 +184,14 @@ public class NodeOutlineNode implements IOutlineNode{
 	public <T> T readOnly(final IUnitOfWork<T, EObject> work) {
 		if (getEObjectURI() != null) {
 			return getDocument().readOnly(new IUnitOfWork<T, XtextResource>() {
+				@Override
 				public T exec(XtextResource state) throws Exception {
 					EObject eObject;
-					if (state.getResourceSet() != null)
+					if (state.getResourceSet() != null) {
 						eObject = state.getResourceSet().getEObject(getEObjectURI(), true);
-					else
+					} else {
 						eObject = state.getEObject(getEObjectURI().fragment());
+					}
 					return work.exec(eObject);
 				}
 
@@ -185,7 +200,7 @@ public class NodeOutlineNode implements IOutlineNode{
 			return null;
 		}
 	}
-	
+
 	public INode getNode() {
 		return node;
 	}
